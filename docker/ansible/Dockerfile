@@ -19,7 +19,7 @@ RUN tar -zxvf docker-$DOCKER_VERSION.tgz
 ## MC
 # https://dl.min.io/client/mc/release/linux-amd64/
 ARG MC_VERSION=RELEASE.2024-04-18T16-45-29Z
-ARG MC_CHECKSUM=60b8d432beb839387207dbcf372393b6a68aa065ee8cd2eb10a395595b0db160
+ARG MC_CHECKSUM=ff54d2d6a6fad91a0b1383a3ce515852b2b3901697166f3ce6f17d698f5711d4
 ADD https://dl.min.io/client/mc/release/linux-amd64/archive/mc.$MC_VERSION ./mc
 RUN echo $MC_CHECKSUM mc > mc.sha256sum
 RUN sha256sum -c mc.sha256sum && chmod 755 /tmp/mc
