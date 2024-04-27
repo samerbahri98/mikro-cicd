@@ -1,0 +1,9 @@
+---
+roles:
+  - name: geerlingguy.docker
+    version: 7.1.0
+collections:
+  - name: viczem.keepass
+    version: 0.7.5
+  - name: cloud.terraform
+    version: 2.0.0

@@ -1,0 +1,6 @@
+---
+version: '3'
+
+tasks:
+  build:ansible:
+    cmd: docker build --target ansible-ee --tag ansible-ee {{.GIT_ROOT_DIR}}/docker/ansible
