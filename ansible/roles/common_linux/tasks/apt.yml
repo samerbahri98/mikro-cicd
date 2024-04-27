@@ -1,0 +1,36 @@
+---
+- name: APT Update
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: safe
+
+- name: Check if restart needed
+  ansible.builtin.stat:
+    path: /var/run/reboot-required
+  register: result
+  become: true
+  changed_when: result.stat.exists
+  notify: "[Common Linux] Restart"
+
+- name: APT Packages
+  ansible.builtin.apt:
+    name: "{{ apt_packages }}"
+    update_cache: false
+    state: present
+  when:
+    - ansible_os_family == 'Debian'
+
+- name: Stop Snap
+  ansible.builtin.systemd_service:
+    name: snapd
+    state: stopped
+    daemon_reload: true
+  ignore_errors: true
+
+- name: Remove Snap
+  ansible.builtin.apt:
+    name: snapd
+    state: absent
+    purge: true
+  when:
+    - ansible_os_family == 'Debian'

@@ -1,0 +1,26 @@
+---
+- name: Install Fuse
+  ansible.builtin.apt:
+    name: fuse
+    state: present
+  become: true
+
+- name: Create Plugin Directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    recurse: true
+    mode: "1755"
+    owner: root
+    group: root
+  become: true
+  with_items:
+    - /var/lib/docker-plugins/rclone/config
+    - /var/lib/docker-plugins/rclone/cache
+
+- name: Install Docker Plugin
+  community.docker.docker_plugin:
+    alias: rclone
+    plugin_name: rclone/docker-volume-rclone:{{ common_docker_rclone_version }}
+    plugin_options:
+      args: -v

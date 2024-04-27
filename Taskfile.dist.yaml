@@ -16,3 +16,5 @@ env:
 includes:
   docker:
     taskfile: "./misc/Taskfiles/docker.yml"
+  ansible:
+    taskfile: "./misc/Taskfiles/ansible.yml"

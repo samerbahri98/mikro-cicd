@@ -1,0 +1,16 @@
+apt_packages:
+  - curl
+  - wget
+  - jq
+  - gnupg
+  - software-properties-common
+  - build-essential
+  - git
+  - tmux
+  - vim
+  - net-tools
+  - htop
+  - iftop
+  - iotop
+  - rsync
+  - tree

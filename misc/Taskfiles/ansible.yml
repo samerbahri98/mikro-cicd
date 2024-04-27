@@ -1,0 +1,14 @@
+---
+version: '3'
+
+tasks:
+  ee:
+    cmd: >
+      docker run --rm -it \
+        -v "$(dirname "$SSH_AUTH_SOCK")":"$(dirname "$SSH_AUTH_SOCK")":ro \
+        -v {{.GIT_ROOT_DIR}}:/runner:ro \
+        -v /var/run/docker.sock:/var/run/docker.sock:rw \
+        -e SSH_AUTH_SOCK="$SSH_AUTH_SOCK" \
+        -e ANSIBLE_HOST_KEY_CHECKING=False \
+        --net=mikro-cicd \
+        ansible-ee /bin/bash

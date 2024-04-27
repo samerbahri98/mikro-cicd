@@ -1,0 +1,17 @@
+---
+- name: Site
+  hosts: mikrocicd
+  tasks:
+    - name: Common Linux Role
+      ansible.builtin.import_role:
+        name: common_linux
+      become: true
+
+    - name: Geerlingguy Docker Role
+      ansible.builtin.import_role:
+        name: geerlingguy.docker
+      become: true
+
+    - name: Common Docker Role
+      ansible.builtin.import_role:
+        name: common_docker

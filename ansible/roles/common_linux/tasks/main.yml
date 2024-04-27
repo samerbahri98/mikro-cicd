@@ -1,0 +1,3 @@
+---
+- name: APT
+  ansible.builtin.import_tasks: apt.yml

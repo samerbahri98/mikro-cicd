@@ -1,0 +1,7 @@
+---
+- name: Install Rclone Plugin
+  ansible.builtin.import_tasks: rclone_plugin.yml
+
+- name: Create Docker Network
+  community.docker.docker_network:
+    name: "{{ common_docker_network }}"
