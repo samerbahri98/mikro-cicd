@@ -1,0 +1,52 @@
+---
+- name: Postgres Client
+  ansible.builtin.import_tasks: pg_client.yml
+  become: true
+  when: docker_postgres_install_client
+
+- name: Postgres Unix Group
+  ansible.builtin.group:
+    gid: 999
+    name: postgres
+    system: true
+  become: true
+
+- name: Template Docker Compose
+  ansible.builtin.template:
+    src: docker-compose.yml
+    dest: /tmp/docker-compose.yml
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+
+- name: Postgres Config Dir
+  ansible.builtin.file:
+    path: /etc/postgresql
+    state: directory
+    mode: "1755"
+    owner: "{{ ansible_user }}"
+    group: postgres
+  become: true
+
+- name: Template Postgres Config
+  ansible.builtin.template:
+    src: postgresql.conf
+    dest: /etc/postgresql/postgresql.conf
+    owner: "{{ ansible_user }}"
+    group: postgres
+    mode: '0440'
+  become: true
+
+- name: Template Postgres Init
+  ansible.builtin.template:
+    src: init.sql
+    dest: /etc/postgresql/init.sql
+    owner: "{{ ansible_user }}"
+    group: postgres
+    mode: '0440'
+  become: true
+
+- name: Run Docker Compose
+  community.docker.docker_compose_v2:
+    project_name: "{{ docker_postgres_network }}"
+    project_src: /tmp

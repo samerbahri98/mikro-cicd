@@ -1,0 +1,17 @@
+---
+docker_postgres_image: postgres:16
+docker_postgres_major_version: 16
+docker_postgres_password: postgres
+docker_postgres_exporter_user: postgres_exporter
+docker_postgres_exporter_password: postgres_exporter
+docker_postgres_storage_volume: postgres
+docker_postgres_server_exporter_image: |-
+  quay.io/prometheuscommunity/postgres-exporter:v0.15.0
+docker_postgres_server_exporter_datasource: |-
+  postgresql://{{
+  docker_postgres_exporter_user}}:{{
+  docker_postgres_exporter_password
+  }}@postgres:5432/postgres?sslmode=disable
+docker_postgres_network: common
+docker_postgres_install_client: true
+docker_postgres_apt_key: https://www.postgresql.org/media/keys/ACCC4CF8.asc

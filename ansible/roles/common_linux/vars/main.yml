@@ -14,3 +14,4 @@ apt_packages:
   - iotop
   - rsync
   - tree
+  - ca-certificates
