@@ -1,0 +1,13 @@
+---
+- name: Template Docker Compose
+  ansible.builtin.template:
+    src: docker-compose.yml
+    dest: /tmp/docker-compose.yml
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+
+- name: Run Docker Compose
+  community.docker.docker_compose_v2:
+    project_name: "{{ docker_traefik_project }}"
+    project_src: /tmp
