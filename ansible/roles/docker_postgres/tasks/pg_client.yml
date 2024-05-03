@@ -1,7 +1,7 @@
 ---
 - name: Postgres APT key 
   ansible.builtin.apt_key:
-    url: "{{ docker_postgres_apt_key }}"
+    url: "{{ docker_postgres_apt_key_url }}"
     state: present
 
 - name: Postgres APT repository
@@ -17,3 +17,7 @@
     update_cache: true
     name: postgresql-client-{{ docker_postgres_major_version }}
     state: present
+
+- name: Postgres Install Psycopg
+  ansible.builtin.pip:
+    name: "{{ docker_postgres_psycopg2 }}"

@@ -1,17 +1,30 @@
 ---
 docker_postgres_image: postgres:16
 docker_postgres_major_version: 16
-docker_postgres_password: postgres
 docker_postgres_exporter_user: postgres_exporter
 docker_postgres_exporter_password: postgres_exporter
 docker_postgres_storage_volume: postgres
 docker_postgres_server_exporter_image: |-
   quay.io/prometheuscommunity/postgres-exporter:v0.15.0
-docker_postgres_server_exporter_datasource: |-
-  postgresql://{{
-  docker_postgres_exporter_user}}:{{
-  docker_postgres_exporter_password
-  }}@postgres:5432/postgres?sslmode=disable
 docker_postgres_network: common
 docker_postgres_install_client: true
-docker_postgres_apt_key: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+docker_postgres_apt_key_url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+docker_postgres_psycopg2: psycopg2-binary==2.9.9
+docker_postgres_project: postgres
+docker_postgres_exporter_enabled: true
+docker_postgres_pgadmin_enabled: true
+docker_postgres_pgadmin_image: dpage/pgadmin4:8
+docker_postgres_pgadmin_servers: []
+docker_postgres_pgadmin_user_email: postgres@example.com
+docker_postgres_pgadmin_user_password: postgres
+docker_postgres_pgadmin_docker_labels:
+  - traefik.enable=true
+  - traefik.http.routers.pgadmin.rule=Host(`pgadmin.docker.localhost`)
+  - traefik.backend=pgadmin
+  - traefik.port=80
+docker_postgres_pgadmin_db_password: pgadmin
+
+docker_postgres_hostname: localhost
+docker_postgres_username: postgres
+docker_postgres_password: postgres
+

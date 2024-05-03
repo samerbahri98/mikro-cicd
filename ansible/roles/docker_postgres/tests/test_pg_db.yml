@@ -1,0 +1,75 @@
+---
+- name: Test Create Postgres DB
+  hosts: test
+  tasks:
+    - name: Prepare Container
+      community.docker.docker_container:
+        name: "{{ lookup('community.general.random_string',special=false) }}"
+        image: "{{ test_docker_postgres_image }}"
+        restart_policy: always
+        env:
+          POSTGRES_PASSWORD: "{{ test_docker_postgres_password }}"
+          POSTGRES_DB: postgres
+        healthcheck:
+          test: ['CMD-SHELL', 'pg_isready', '-d', 'postgres']
+          interval: 30s
+          timeout: 60s
+          retries: 5
+          start_period: 0s
+      register: results
+
+    - name: Set Facts
+      ansible.builtin.set_fact:
+        test_docker_postgres_host: |-
+          {{ results.container.NetworkSettings.IPAddress }}
+        test_docker_postgres_container: "{{ results.container.Id }}"
+
+    - name: Wait
+      ansible.builtin.wait_for:
+        host: "{{ test_docker_postgres_host }}"
+        port: 5432
+
+    - name: Converge
+      ansible.builtin.include_role:
+        name: docker_postgres
+        tasks_from: pg_db.yml
+      vars:
+        docker_postgres_hostname: "{{ test_docker_postgres_host }}"
+        docker_postgres_username: postgres
+        docker_postgres_password: postgres
+        docker_postgres_db_name: test{{ idx }}
+        docker_postgres_db_password: test{{ idx }}
+      loop: "{{ range (2) }}"
+      loop_control:
+        loop_var: idx
+
+    - name: Verfiy Create Table
+      community.postgresql.postgresql_table:
+        name: test
+        db: test{{ idx }}
+        login_host: "{{ test_docker_postgres_host }}"
+        login_user: test{{ idx }}
+        login_password: test{{ idx }}
+      loop: "{{ range (2) }}"
+      loop_control:
+        loop_var: idx
+
+    - name: Verify Unpriviledged Create Table
+      community.postgresql.postgresql_table:
+        name: test
+        db: test{{ (idx+1) %2  }}
+        login_host: "{{ test_docker_postgres_host }}"
+        login_user: test{{ idx }}
+        login_password: test{{ idx }}
+      loop: "{{ range (2) }}"
+      loop_control:
+        loop_var: idx
+      ignore_errors: true
+      register: result
+      failed_when: >
+        'User does not have CONNECT privilege' not in result.msg
+
+    - name: Destroy Container
+      community.docker.docker_container:
+        name: "{{ test_docker_postgres_container }}"
+        state: absent

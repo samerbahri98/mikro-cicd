@@ -1,0 +1,27 @@
+---
+- name: Postgres Role
+  community.postgresql.postgresql_user:
+    name: "{{ docker_postgres_db_name }}"
+    password: "{{ docker_postgres_db_password }}"
+    login_host: "{{ docker_postgres_hostname }}"
+    login_user: "{{ docker_postgres_username }}"
+    login_password: "{{ docker_postgres_password }}"
+
+- name: Postgres Database
+  community.postgresql.postgresql_db:
+    name: "{{ docker_postgres_db_name }}"
+    owner: "{{ docker_postgres_db_name }}"
+    login_host: "{{ docker_postgres_hostname }}"
+    login_user: "{{ docker_postgres_username }}"
+    login_password: "{{ docker_postgres_password }}"
+
+- name: Postgres Public Privileges
+  community.postgresql.postgresql_privs:
+    database: "{{ docker_postgres_db_name }}"
+    type: database
+    priv: ALL
+    role: PUBLIC
+    state: absent
+    login_host: "{{ docker_postgres_hostname }}"
+    login_user: "{{ docker_postgres_username }}"
+    login_password: "{{ docker_postgres_password }}"
