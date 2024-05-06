@@ -1,0 +1,75 @@
+---
+- name: Hashivault Postgres Database
+  ansible.builtin.include_role:
+    name: docker_postgres
+    tasks_from: pg_db.yml
+  vars:
+    docker_postgres_db_name: "{{ docker_hashivault_pgdb_name }}"
+    docker_postgres_db_password: "{{ docker_hashivault_pgdb_password }}"
+
+- name: Hashivault Postgres Table
+  community.postgresql.postgresql_table:
+    db: "{{ docker_hashivault_pgdb_name }}"
+    table: "{{ docker_hashivault_pgdb_table }}"
+    login_host: "{{ docker_postgres_hostname }}"
+    login_user: "{{ docker_postgres_username }}"
+    login_password: "{{ docker_postgres_password }}"
+    owner: "{{ docker_hashivault_pgdb_name }}"
+  register: results
+
+- name: Hashivault Postgres Table Columns
+  community.postgresql.postgresql_query:
+    db: "{{ docker_hashivault_pgdb_name }}"
+    login_host: "{{ docker_postgres_hostname }}"
+    login_user: "{{ docker_hashivault_pgdb_name }}"
+    login_password: "{{ docker_hashivault_pgdb_password }}"
+    query: >
+      ALTER TABLE {{ docker_hashivault_pgdb_table }} ADD COLUMN IF NOT EXISTS parent_path TEXT COLLATE "C" NOT NULL;
+      ALTER TABLE {{ docker_hashivault_pgdb_table }} ADD COLUMN IF NOT EXISTS path        TEXT COLLATE "C";
+      ALTER TABLE {{ docker_hashivault_pgdb_table }} ADD COLUMN IF NOT EXISTS key         TEXT COLLATE "C";
+      ALTER TABLE {{ docker_hashivault_pgdb_table }} ADD COLUMN IF NOT EXISTS value       BYTEA;
+      ALTER TABLE {{ docker_hashivault_pgdb_table }} DROP CONSTRAINT IF EXISTS {{ docker_hashivault_pgdb_table }}_pkey;
+      ALTER TABLE {{ docker_hashivault_pgdb_table }} ADD PRIMARY KEY (path, key);
+      CREATE INDEX IF NOT EXISTS parent_path_idx ON {{ docker_hashivault_pgdb_table }} (parent_path);
+      SELECT NULL;
+  # when: results.changed
+  changed_when: results.changed
+
+- name: Hashivault Config Dir
+  ansible.builtin.file:
+    path: /etc/hashivault
+    state: directory
+    mode: "1755"
+    owner: 100
+  become: true
+
+- name: Hashivault Config file
+  ansible.builtin.copy:
+    content: "{{ docker_hashivault_config_file }}"
+    dest: /etc/hashivault/vault-config.hcl
+    owner: 100
+    mode: "0600"
+  become: true
+
+- name: Hashivault Healthcheck file
+  ansible.builtin.copy:
+    src: healthcheck.sh
+    dest: /etc/hashivault/healthcheck.sh
+    owner: 100
+    mode: "0600"
+  become: true
+
+- name: Template Docker Compose
+  ansible.builtin.template:
+    src: docker-compose.yml
+    dest: /tmp/docker-compose.yml
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+
+- name: Run Docker Compose
+  community.docker.docker_compose_v2:
+    project_name: "{{ docker_hashivault_project }}"
+    project_src: /tmp
+
+

@@ -1,0 +1,26 @@
+---
+services:
+  hashivault:
+    image: "{{ docker_hashivault_image }}"
+    container_name: hashivault
+    restart: always
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - /etc/hashivault:/vault/config:ro
+    command: ["server"]
+    healthcheck:
+      test: ['CMD-SHELL', '/bin/sh "/vault/config/healthcheck.sh"']
+      interval: 30s
+      timeout: 60s
+      retries: 5
+      start_period: 0s
+    labels:
+{% for docker_label in docker_hashivault_docker_labels %}
+      - "{{ docker_label }}"
+{% endfor %}
+
+networks:
+  default:
+    name: "{{ docker_hashivault_network }}"
+    external: true

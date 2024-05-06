@@ -1,0 +1,4 @@
+---
+_docker_hashivault_pg_conn: |-
+  postgresql://{{ docker_hashivault_pgdb_name}}:{{ docker_hashivault_pgdb_password }}@postgres:5432/{{ docker_hashivault_pgdb_name}}?sslmode=disable
+

@@ -1,0 +1,18 @@
+---
+docker_hashivault_image: hashicorp/vault:1.16
+docker_hashivault_network: common
+docker_hashivault_config_file: |-
+  {{ lookup('ansible.builtin.template', 'vault-config.hcl') }}
+docker_hashivault_docker_labels:
+  - traefik.enable=true
+  - traefik.http.routers.hashivault.rule=Host(`hashivault.docker.localhost`)
+  - traefik.backend=hashivault
+  - traefik.port=8200
+docker_hashivault_pgdb_name: hashivault
+docker_hashivault_pgdb_password: hashivault
+docker_hashivault_pgdb_table: vault_kv_store
+docker_hashivault_project: hashivault
+
+docker_postgres_hostname: localhost
+docker_postgres_username: postgres
+docker_postgres_password: postgres
