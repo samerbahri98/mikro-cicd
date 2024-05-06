@@ -1,0 +1,21 @@
+---
+_docker_postgres_pgadmin_docker_server:
+  Name: Local
+  Group: Local
+  Port: 5432
+  Username: postgres
+  PassFile: .pgpassfile
+  Host: postgres
+  SSLMode: disable
+  MaintenanceDB: postgres
+_docker_postgres_pgadmin_servers: |
+  {% for server in docker_postgres_pgadmin_servers + [_docker_postgres_pgadmin_docker_server] %}
+    "{{ loop.index }}":
+      {{ server }}
+  {% endfor %}
+_docker_postgres_pgadmin_servers_json:
+  Servers: "{{ _docker_postgres_pgadmin_servers | from_yaml }}"
+_docker_postgres_server_exporter_datasource: |-
+  postgresql://{{ docker_postgres_exporter_user}}:{{ docker_postgres_exporter_password }}@postgres:5432/postgres?sslmode=disable
+_docker_postgres_server_pgadmin_datasource: |-
+  postgresql://pgadmin@postgres:5432/?passfile=/etc/pgadmin/.pgpassfile&sslmode=disable

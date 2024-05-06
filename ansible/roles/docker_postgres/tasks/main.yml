@@ -37,7 +37,35 @@
     mode: '0440'
   become: true
 
-- name: Template Postgres Init
+- name: Postgres Docker Container
+  community.docker.docker_container:
+    image: "{{ docker_postgres_image }}"
+    name: postgres
+    restart_policy: always
+    volumes:
+      - /var/lib/postgresql/data:/var/lib/postgresql/data:rw
+      - /etc/postgresql:/etc/postgresql:ro
+    command: ["-c", "config_file=/etc/postgresql/postgresql.conf"]
+    env:
+      POSTGRES_PASSWORD: "{{ docker_postgres_password }}"
+      POSTGRES_DB: postgres
+    ports:
+      - 127.0.0.1:5432:5432
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready', '-d', 'postgres']
+      interval: 30s
+      timeout: 60s
+      retries: 5
+      start_period: 0s
+    networks:
+      - name: "{{ docker_postgres_network }}"
+
+- name: Wait
+  ansible.builtin.wait_for:
+    host: localhost
+    port: 5432
+
+- name: Postgres Exporter Init Script
   ansible.builtin.template:
     src: init.sql
     dest: /etc/postgresql/init.sql
@@ -45,8 +73,58 @@
     group: postgres
     mode: '0440'
   become: true
+  when: docker_postgres_exporter_enabled
+
+- name: Postgres Exporter Init
+  community.postgresql.postgresql_script:
+    path: /etc/postgresql/init.sql
+    login_host: localhost
+    login_user: postgres
+    login_password: "{{ docker_postgres_password }}"
+  when: docker_postgres_exporter_enabled
+  retries: 5
+  delay: 5
+
+- name: Pgadmin Config DB
+  ansible.builtin.import_tasks: pg_db.yml
+  vars:
+    docker_postgres_db_name: pgadmin
+    docker_postgres_db_password: "{{ docker_postgres_pgadmin_db_password }}"
+  when: docker_postgres_pgadmin_enabled
+
+- name: Pgadmin Config Dir
+  ansible.builtin.file:
+    path: /etc/pgadmin
+    state: directory
+    mode: "1775"
+    owner: 5050  # pgadmin uid
+    group: postgres
+  become: true
+  when: docker_postgres_pgadmin_enabled
+
+- name: Template Pgadmin Servers
+  ansible.builtin.copy:
+    content: "{{ _docker_postgres_pgadmin_servers_json }}"
+    dest: /etc/pgadmin/servers.json
+    mode: "660"
+    owner: 5050  # pgadmin uid
+    group: postgres
+  become: true
+  when: docker_postgres_pgadmin_enabled
+
+- name: Template Pgadmin Servers
+  ansible.builtin.copy:
+    content: |
+      postgres:5432:*:postgres:{{ docker_postgres_password }}
+      postgres:5432:pgadmin:pgadmin:{{ docker_postgres_pgadmin_db_password }}
+    dest: /etc/pgadmin/.pgpassfile
+    mode: "600"
+    owner: 5050  # pgadmin uid
+    group: postgres
+  become: true
+  when: docker_postgres_pgadmin_enabled
 
 - name: Run Docker Compose
   community.docker.docker_compose_v2:
-    project_name: "{{ docker_postgres_network }}"
+    project_name: "{{ docker_postgres_project }}"
     project_src: /tmp
