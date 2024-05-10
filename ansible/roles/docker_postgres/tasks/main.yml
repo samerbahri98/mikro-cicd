@@ -47,7 +47,7 @@
       - /etc/postgresql:/etc/postgresql:ro
     command: ["-c", "config_file=/etc/postgresql/postgresql.conf"]
     env:
-      POSTGRES_PASSWORD: "{{ docker_postgres_password }}"
+      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
     ports:
       - 127.0.0.1:5432:5432
@@ -59,11 +59,28 @@
       start_period: 0s
     networks:
       - name: "{{ docker_postgres_network }}"
+  register: _docker_postgres_container
 
-- name: Wait
-  ansible.builtin.wait_for:
-    host: localhost
-    port: 5432
+- name: Check Init password
+  community.postgresql.postgresql_ping:
+    login_host: localhost
+    login_user: postgres
+    login_password: postgres
+  register: _docker_postgres_ping
+  retries: 5
+  delay: 5
+  until: _docker_postgres_ping.is_available
+  ignore_errors: "{{ 'password authentication failed' in _docker_postgres_ping.conn_err_msg }}"
+
+- name: Postgres Root Password
+  community.postgresql.postgresql_user:
+    name: postgres
+    password: "{{ docker_postgres_password }}"
+    login_host: localhost
+    login_user: postgres
+    login_password: postgres
+  when: _docker_postgres_container.changed and 'password authentication failed' in _docker_postgres_ping.conn_err_msg
+
 
 - name: Postgres Exporter Init Script
   ansible.builtin.template:
@@ -128,3 +145,8 @@
   community.docker.docker_compose_v2:
     project_name: "{{ docker_postgres_project }}"
     project_src: /tmp
+  environment: 
+    EXPORTER_DATA_SOURCE_NAME: "{{ _docker_postgres_server_exporter_datasource }}"
+    PGADMIN_DEFAULT_EMAIL: "{{ docker_postgres_pgadmin_user_email }}"
+    PGADMIN_DEFAULT_PASSWORD: "{{ docker_postgres_pgadmin_user_password }}"
+    PGADMIN_CONFIG_CONFIG_DATABASE_URI: "\"{{ _docker_postgres_server_pgadmin_datasource }}\""

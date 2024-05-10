@@ -1,0 +1,28 @@
+---
+- name: Add GPG
+  ansible.builtin.shell: |-
+    echo "{{ gpg_encrypt_pubkey }}" | gpg --import - ;
+    echo "{{ gpg_encrypt_message | to_json }}" | gpg --output /tmp/{{ gpg_encrypt_filename }}.gpg --encrypt --recipient "{{ gpg_encrypt_recipient }}" --always-trust - ;
+  delegate_to: localhost
+  delegate_facts: true
+
+    # gpg --output /tmp/{{ gpg_encrypt_filename }}.gpg --encrypt --recipient "{{ gpg_encrypt_recipient }}" --always-trust <() ;
+
+
+# - name: Add GPG
+#   ansible.builtin.shell:
+#     cmd: 
+#   delegate_to: localhost
+#   delegate_facts: true
+
+- name: Email Message
+  community.general.mail:
+    to: "{{ gpg_encrypt_recipient }}"
+    attach: ["/tmp/{{ gpg_encrypt_filename }}.gpg"]
+    subject: Ansible {{ gpg_encrypt_filename }}.gpg
+    host: "{{ gpg_encrypt_smtp_host }}"
+    port: "{{ gpg_encrypt_smtp_port }}"
+    username: "{{ gpg_encrypt_smtp_user }}"
+    password: "{{ gpg_encrypt_smtp_password }}"
+  delegate_to: localhost
+  delegate_facts: true 

@@ -1,0 +1,8 @@
+---
+- name: Test GPG Encrypt Mail
+  hosts: test
+  tasks:
+    - name: Converge
+      ansible.builtin.include_role:
+        name: misc
+        tasks_from: gpg_encrypt_mail.yml

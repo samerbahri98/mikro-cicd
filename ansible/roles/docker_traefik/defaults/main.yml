@@ -2,3 +2,4 @@
 docker_traefik_image: traefik:v3.0
 docker_traefik_network: common
 docker_traefik_project: traefik
+docker_traefik_socket: /var/run/docker.sock

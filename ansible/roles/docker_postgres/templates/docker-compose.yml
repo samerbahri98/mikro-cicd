@@ -6,7 +6,7 @@ services:
     container_name: postgres_server_exporter
     restart: always
     environment:
-      DATA_SOURCE_NAME: "{{ _docker_postgres_server_exporter_datasource }}"
+      DATA_SOURCE_NAME: ${EXPORTER_DATA_SOURCE_NAME}
 {% endif %}
 
 {% if docker_postgres_pgadmin_enabled %}
@@ -15,11 +15,11 @@ services:
     restart: always
     container_name: "pgadmin"
     environment:
-      PGADMIN_DEFAULT_EMAIL: "{{ docker_postgres_pgadmin_user_email }}"
-      PGADMIN_DEFAULT_PASSWORD: "{{ docker_postgres_pgadmin_user_password }}"
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
       PGADMIN_LISTEN_PORT: "80"
       PGADMIN_SERVER_JSON_FILE: /etc/pgadmin/servers.json
-      PGADMIN_CONFIG_CONFIG_DATABASE_URI: '"{{ _docker_postgres_server_pgadmin_datasource }}"'  # Need to verify
+      PGADMIN_CONFIG_CONFIG_DATABASE_URI: ${PGADMIN_CONFIG_CONFIG_DATABASE_URI}
       PGPASSFILE: /etc/pgadmin/.pgpassfile
     entrypoint: >
       /bin/sh -c "
