@@ -1,0 +1,50 @@
+---
+gpg_encrypt_message: foo
+gpg_encrypt_filename: content
+gpg_encrypt_recipient: ansible <ansible@localhost>
+gpg_encrypt_pubkey: |-
+  -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+  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
+  hmBNRHKO4A==
+  =X0Cc
+  -----END PGP PUBLIC KEY BLOCK-----
+gpg_encrypt_smtp_host: localhost
+gpg_encrypt_smtp_port: 1025
+gpg_encrypt_smtp_user: ansible@localhost
+gpg_encrypt_smtp_password: ansible

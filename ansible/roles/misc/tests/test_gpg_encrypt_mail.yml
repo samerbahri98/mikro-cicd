@@ -2,7 +2,60 @@
 - name: Test GPG Encrypt Mail
   hosts: test
   tasks:
+    - name: Prepare GPG Private Key
+      ansible.builtin.shell: |-
+        echo "{{ test_misc_gpg_encrypt_private_key }}" | gpg --import - ;
+
+    - name: Prepare Container
+      community.docker.docker_container:
+        name: "{{ lookup('community.general.random_string',special=false) }}"
+        image: "{{ test_misc_mailcatcher_image }}"
+      register: results
+
+    - name: Set Facts
+      ansible.builtin.set_fact:
+        test_misc_mailcatcher_host: |-
+          {{ results.container.NetworkSettings.IPAddress }}
+        test_misc_mailcatcher_container: "{{ results.container.Id }}"
+        test_misc_content: "{{ lookup('community.general.random_string',special=false) }}"
+
     - name: Converge
       ansible.builtin.include_role:
         name: misc
         tasks_from: gpg_encrypt_mail.yml
+        defaults_from: gpg_encrypt_mail.yml
+      vars:
+        gpg_encrypt_smtp_host: "{{ test_misc_mailcatcher_host }}"
+        gpg_encrypt_smtp_port: "{{ test_misc_mailcatcher_port }}"
+        gpg_encrypt_filename: content
+        gpg_encrypt_recipient: "{{ test_misc_mailcatcher_recipient }}"
+        gpg_encrypt_smtp_user: ''
+        gpg_encrypt_smtp_password: ''
+        gpg_encrypt_message: "{{ test_misc_content }}"
+        
+
+    - name: Verify Email Sent
+      ansible.builtin.uri:
+        url: "{{ test_misc_mailcatcher_http }}/messages/1.json"
+        return_content: true
+      register: results
+      failed_when: |
+        results['json']['attachments'][0]['filename'] != 'content.gpg'
+        or test_misc_mailcatcher_recipient not in  results['json']['recipients']
+    
+    - name: Download Attachment
+      ansible.builtin.get_url:
+        url: "{{ test_misc_mailcatcher_http }}/messages/1/parts/{{ results['json']['attachments'][0]['cid'] }}"
+        dest: /tmp/content.gpg
+    
+    - name: Verify Email Content
+      ansible.builtin.shell: gpg --decrypt  /tmp/content.gpg
+      register: results
+      failed_when: |
+        test_misc_content not in results.stdout
+        or test_misc_mailcatcher_recipient not in results.stderr
+
+    - name: Destroy Container
+      community.docker.docker_container:
+        name: "{{ test_misc_mailcatcher_container }}"
+        state: absent

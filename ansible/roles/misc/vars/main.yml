@@ -1,0 +1,2 @@
+---
+_gpg_encrypt_filename: "{{ gpg_encrypt_filename }}.gpg"
