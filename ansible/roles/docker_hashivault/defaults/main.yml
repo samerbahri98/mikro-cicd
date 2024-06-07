@@ -16,3 +16,10 @@ docker_hashivault_project: hashivault
 docker_postgres_hostname: localhost
 docker_postgres_username: postgres
 docker_postgres_password: postgres
+
+docker_hashivault_reserved:
+  url: http://hashivault.docker.localhost
+  path: vault_seal_keys
+  engine_mount_point: kv
+  token: ROOTNAME
+  

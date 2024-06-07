@@ -10,7 +10,7 @@ services:
       - /etc/hashivault:/vault/config:ro
     command: ["server"]
     healthcheck:
-      test: ['CMD-SHELL', '/bin/sh "/vault/config/healthcheck.sh"']
+      test: ['CMD', '/bin/vault', 'read', '-address=http://localhost:8200', 'sys/health']
       interval: 30s
       timeout: 60s
       retries: 5

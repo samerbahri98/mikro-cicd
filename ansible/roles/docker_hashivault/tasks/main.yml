@@ -32,7 +32,6 @@
       ALTER TABLE {{ docker_hashivault_pgdb_table }} ADD PRIMARY KEY (path, key);
       CREATE INDEX IF NOT EXISTS parent_path_idx ON {{ docker_hashivault_pgdb_table }} (parent_path);
       SELECT NULL;
-  # when: results.changed
   changed_when: results.changed
 
 - name: Hashivault Config Dir
@@ -51,14 +50,6 @@
     mode: "0600"
   become: true
 
-- name: Hashivault Healthcheck file
-  ansible.builtin.copy:
-    src: healthcheck.sh
-    dest: /etc/hashivault/healthcheck.sh
-    owner: 100
-    mode: "0600"
-  become: true
-
 - name: Template Docker Compose
   ansible.builtin.template:
     src: docker-compose.yml
@@ -72,4 +63,12 @@
     project_name: "{{ docker_hashivault_project }}"
     project_src: /tmp
 
+- name: Verify Vault init
+  community.hashi_vault.vault_read:
+    path: sys/init
+  register: _docker_hashivault_init
+
+- name: Unseal Vault
+  ansible.builtin.import_tasks: ./unseal.yml
+  when: not _docker_hashivault_init['data']['data']['initialized']
 

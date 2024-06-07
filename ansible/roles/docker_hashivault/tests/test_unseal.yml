@@ -1,0 +1,129 @@
+---
+- name: Test Vault Unseal
+  hosts: test
+  tasks:
+    - name: Prepare Sealed Vault
+      community.docker.docker_container:
+        name: "sealed{{ lookup('community.general.random_string',special=false) }}"
+        image: "{{ test_docker_hashivault_image }}"
+        command: server
+        capabilities:
+          - IPC_LOCK
+        env:
+          VAULT_LOCAL_CONFIG: '{"storage": {"file": {"path": "/vault/file"}}, "listener": [{"tcp": { "address": "0.0.0.0:8200", "tls_disable": true}}], "default_lease_ttl": "168h", "max_lease_ttl": "720h", "ui": true}'
+      register: results
+
+    - name: Set Sealed Facts
+      ansible.builtin.set_fact:
+        test_docker_hashivault_sealed_host: |-
+          {{ results.container.NetworkSettings.IPAddress }}
+        test_docker_hashivault_sealed_http: |-
+          http://{{ results.container.NetworkSettings.IPAddress }}:8200
+        test_docker_hashivault_sealed_container: "{{ results.container.Id }}"
+      no_log: true
+
+    - name: Prepare Unsealed Vault
+      community.docker.docker_container:
+        name: "unsealed{{ lookup('community.general.random_string',special=false) }}"
+        image: "{{ test_docker_hashivault_image }}"
+        capabilities:
+          - IPC_LOCK
+        env:
+          VAULT_DEV_ROOT_TOKEN_ID: "{{ test_docker_hashivault_reserved_token }}"
+      register: results
+
+    - name: Set Unsealed Facts
+      ansible.builtin.set_fact:
+        test_docker_hashivault_unsealed_host: |-
+          {{ results.container.NetworkSettings.IPAddress }}
+        test_docker_hashivault_unsealed_http: |-
+          http://{{ results.container.NetworkSettings.IPAddress }}:8200
+        test_docker_hashivault_unsealed_container: "{{ results.container.Id }}"
+
+    - name: Vault Healthcheck
+      ansible.builtin.uri:
+        url: |-
+          {{ item }}/v1/sys/init
+      with_items:
+        - "{{ test_docker_hashivault_unsealed_http }}"
+        - "{{ test_docker_hashivault_sealed_http }}"
+      retries: 15
+      delay: 5
+
+    - name: Prepare Unsealed Vault Store
+      community.hashi_vault.vault_write:
+        path: sys/mounts/kv
+        data:
+          type: kv
+          options:
+            version: "2"
+        url: "{{ test_docker_hashivault_unsealed_http }}"
+        token: "{{ test_docker_hashivault_reserved_token }}"
+    
+    - name: Test
+      module_defaults:
+        group/community.hashi_vault.vault:
+          auth_method: "none"
+          url: "{{ test_docker_hashivault_sealed_http }}"
+      block:
+
+        - name: Converge
+          ansible.builtin.import_role:
+            name: docker_hashivault
+            tasks_from: unseal.yml
+          vars:
+            docker_hashivault_reserved:
+              auth_method: "token"
+              url: "{{ test_docker_hashivault_unsealed_http }}"
+              engine_mount_point: "kv"
+              path: vault_seal_keys
+              token: "{{ test_docker_hashivault_reserved_token }}"
+
+        - name: Get Reserved Entry
+          community.hashi_vault.vault_kv2_get:
+            auth_method: "token"
+            url: "{{ test_docker_hashivault_unsealed_http }}"
+            engine_mount_point: "kv"
+            path: vault_seal_keys
+            token: "{{ test_docker_hashivault_reserved_token }}"
+          register: test_docker_hashivault_reserve_entry
+
+      rescue:
+        - name: Destroy Containers
+          community.docker.docker_container:
+            name: "{{ item }}"
+            state: absent
+          with_items:
+            - "{{ test_docker_hashivault_unsealed_container }}"
+            - "{{ test_docker_hashivault_sealed_container }}"
+
+    - name: Verify
+      module_defaults:
+        group/community.hashi_vault.vault:
+          auth_method: "token"
+          url: "{{ test_docker_hashivault_sealed_http }}"
+          token: "{{ test_docker_hashivault_reserve_entry['data']['data']['root_token'] }}"
+      block:
+
+        - name: Verify Seal
+          community.hashi_vault.vault_write:
+            path: sys/seal
+
+        - name: Verify Unseal
+          community.hashi_vault.vault_write:
+            path: sys/unseal
+            data:
+              key: "{{ item }}"
+          with_items: |-
+            {{ test_docker_hashivault_reserve_entry['data']['data']['keys_base64'] }}
+          retries: 3
+          delay: 3
+
+      always:
+        - name: Destroy Containers
+          community.docker.docker_container:
+            name: "{{ item }}"
+            state: absent
+          with_items:
+            - "{{ test_docker_hashivault_unsealed_container }}"
+            - "{{ test_docker_hashivault_sealed_container }}"

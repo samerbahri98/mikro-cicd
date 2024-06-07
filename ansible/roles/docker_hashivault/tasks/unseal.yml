@@ -1,0 +1,38 @@
+---
+- name: Vault Init
+  community.hashi_vault.vault_write:
+    path: sys/init
+    data:
+      secret_shares: 5
+      secret_threshold: 5
+  register: results
+
+- name: Set Facts
+  ansible.builtin.set_fact:
+    _docker_hashivault_credentials:
+      data: "{{ results['data']}}"
+    _docker_hashivault_root_token: |-
+      {{
+        results['data']['root_token']
+      }}
+    _docker_hashivault_root_keys: |-
+      {{
+        results['data']['keys']
+      }}
+  no_log: true
+
+- name: Vault Credentials Save
+  community.hashi_vault.vault_kv2_write: |-
+    {{ docker_hashivault_reserved | ansible.builtin.combine(_docker_hashivault_credentials) }}
+  delegate_to: localhost
+  delegate_facts: true
+
+- name: Vault Unseal
+  community.hashi_vault.vault_write:
+    path: sys/unseal
+    data:
+      key: "{{ item }}"
+  with_items: "{{ _docker_hashivault_root_keys }}"
+  no_log: true
+  retries: 3
+  delay: 3
