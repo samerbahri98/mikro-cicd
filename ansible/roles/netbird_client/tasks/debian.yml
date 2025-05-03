@@ -1,0 +1,20 @@
+- name: netbird install
+  block:
+    - name: netbird apt key
+      become: true
+      ansible.builtin.apt_key:
+        url: https://pkgs.netbird.io/debian/public.key
+        keyring: /usr/share/keyrings/netbird-archive-keyring.gpg
+        state: "{{ netbird_client_state }}"
+
+    - name: netbird repository
+      become: true
+      ansible.builtin.apt_repository:
+        repo: deb [signed-by=/usr/share/keyrings/netbird-archive-keyring.gpg] https://pkgs.netbird.io/debian stable main
+        state: "{{ netbird_client_state }}"
+
+    - name: netbird
+      become: true
+      ansible.builtin.apt:
+        name: netbird
+        state: "{{ netbird_client_state }}"

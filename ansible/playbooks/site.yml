@@ -1,6 +1,6 @@
 ---
 - name: Site
-  hosts: mikrocicd
+  hosts: all
   tasks:
     - name: Common Linux Role
       ansible.builtin.import_role:

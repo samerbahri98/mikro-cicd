@@ -1,4 +1,4 @@
 - name: Role Wrapper
-  hosts: mikrocicd
+  hosts: "{{ hosts }}"
   roles:
     - "{{ role }}"

@@ -1,0 +1,8 @@
+---
+- name: netbird apt install
+  ansible.builtin.include_tasks: debian.yml
+  when: ansible_os_family == 'Debian'
+
+- name: netbird run
+  ansible.builtin.command:
+    cmd: "netbird up --setup-key={{ netbird_client_setup_key }}"
