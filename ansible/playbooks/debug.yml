@@ -1,0 +1,9 @@
+- name: Debug
+  hosts: "{{ hosts }}"
+  tasks:
+    - name: get hostname
+      ansible.builtin.command:
+        cmd: cat /etc/hostname
+      register: result
+    - debug:
+        var: result.stdout

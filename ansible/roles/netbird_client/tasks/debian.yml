@@ -5,13 +5,14 @@
       ansible.builtin.apt_key:
         url: https://pkgs.netbird.io/debian/public.key
         keyring: /usr/share/keyrings/netbird-archive-keyring.gpg
-        state: "{{ netbird_client_state }}"
+      when: netbird_client_state == "present"
 
     - name: netbird repository
       become: true
       ansible.builtin.apt_repository:
         repo: deb [signed-by=/usr/share/keyrings/netbird-archive-keyring.gpg] https://pkgs.netbird.io/debian stable main
         state: "{{ netbird_client_state }}"
+      when: netbird_client_state == "present"
 
     - name: netbird
       become: true
