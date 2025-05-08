@@ -1,0 +1,2 @@
+k8s_loadbalancer_metallb_range: 192.168.2.150-192.168.2.159
+k8s_loadbalancer_metallb_namespace: metallb-system
