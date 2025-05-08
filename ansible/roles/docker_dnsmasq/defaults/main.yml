@@ -1,0 +1,8 @@
+---
+docker_dnsmasq_image: dockurr/dnsmasq:2.91
+docker_dnsmasq_subnet: 10.100.0.0/24
+docker_dnsmasq_gateway: 10.100.0.1
+docker_dnsmasq_container_address: 10.100.0.254
+docker_dnsmasq_host_address: 10.100.0.99
+docker_dnsmasq_interface: eth0.2
+docker_dnsmasq_dhcp_range: 10.100.0.5,10.100.0.99

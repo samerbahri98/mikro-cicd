@@ -1,0 +1,26 @@
+---
+services:
+  dnsmasq:
+    image: "{{ docker_dnsmasq_image }}"
+    restart: always
+    cap_add:
+      - NET_ADMIN
+    environment:
+      TZ: Europe/Budapest
+      DNS1: "1.0.0.1"
+      DNS2: "1.1.1.1"
+    volumes:
+      - /etc/dnsmasq.d:/etc/dnsmasq.d:ro
+    networks:
+      vlan2_net:
+        ipv4_address: "{{ docker_dnsmasq_container_address }}"
+
+networks:
+  vlan2_net:
+    driver: macvlan
+    driver_opts:
+      parent: "{{ docker_dnsmasq_interface }}"
+    ipam:
+      config:
+        - subnet: "{{ docker_dnsmasq_subnet }}"
+          gateway: "{{ docker_dnsmasq_gateway }}"
