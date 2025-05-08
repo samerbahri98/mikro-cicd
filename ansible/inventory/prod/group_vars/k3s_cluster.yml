@@ -1,0 +1,15 @@
+k3s_version: v1.32.4+k3s1
+token: "{{ lookup('viczem.keepass.keepass', 'k3s-token', 'password') }}"
+api_endpoint: "{{ hostvars[groups['server'][0]]['ansible_host'] | default(groups['server'][0]) }}"
+# server_config_yaml: |
+#   kube-apiserver-arg:
+#     - 'audit-log-path=/var/lib/rancher/k3s/server/logs/audit.log'
+#     - 'audit-policy-file=/var/lib/rancher/k3s/server/audit.yaml'
+#     - 'audit-log-maxage=30'
+#     - 'audit-log-maxbackup=10'
+#     - 'audit-log-maxsize=100'
+
+server_config_yaml:
+  disable:
+    - servicelb
+    - traefik

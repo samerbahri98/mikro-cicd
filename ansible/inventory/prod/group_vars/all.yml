@@ -1,3 +1,4 @@
 ---
 git_root_dir: "{{ lookup('ansible.builtin.pipe','git rev-parse --show-toplevel') }}"
 ansible_user: rundeck
+keepass_dbx: "/runner/creds.kdbx"
