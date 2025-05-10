@@ -1,0 +1,4 @@
+---
+nm_dnsmasq_k8s_records: |
+  address=/k8s.home/192.168.2.150
+  cname=*k8s.home,k8s.home

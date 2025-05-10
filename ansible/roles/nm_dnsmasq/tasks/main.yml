@@ -1,0 +1,40 @@
+---
+- name: apt install dnsmasq
+  become: true
+  ansible.builtin.apt:
+    name: dnsmasq
+
+- name: NetworkNamager Enable dnsmasq
+  become: true
+  ansible.builtin.copy:
+    content: |
+      [main]
+      dns=dnsmasq
+    dest: /etc/NetworkManager/conf.d/dns.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: dnsmasq Add K8s Records
+  become: true
+  ansible.builtin.copy:
+    content: "{{ nm_dnsmasq_k8s_records }}"
+    dest: /etc/NetworkManager/dnsmasq.d/k8s.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+# - name: dnsmasq Add Inventory Records
+#   become: true
+#   ansible.builtin.copy:
+#     content: "{{ nm_dnsmasq_nodes_records }}"
+#     dest: /etc/NetworkManager/dnsmasq.d/nodes.conf
+#     owner: root
+#     group: root
+#     mode: '0644'
+
+- name: restart NetworkNamager
+  become: true
+  ansible.builtin.systemd_service:
+    name: NetworkManager
+    state: reloaded

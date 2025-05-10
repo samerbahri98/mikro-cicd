@@ -1,0 +1,5 @@
+---
+- name: configure bastion
+  hosts: home-bastion
+  roles:
+    - nm_dnsmasq
